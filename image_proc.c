@@ -5,9 +5,10 @@
 #include "stb_image_write.h"
 #include "image_proc.h"
 
-struct image_params {
-    const char *fname;
-};
+typedef struct image_params {
+    const char *fname_in;
+    const char *fname_out;
+} image_params;
 
 image_t *resize_image(image_t *img, int w, int h)
 {
@@ -84,9 +85,9 @@ void letterbox_image(image_t *img, int w, int h){
     embed_image(img, boxed, (w-new_w)/2, (h-new_h)/2);
 }
 
-int load_image(const char *filename, image_t *img){
+int load_image(const char *filename_in, image_t *img){
     int w, h, c;
-    uint8_t * data = stbi_load(filename, &w, &h, &c, 3);
+    uint8_t * data = stbi_load(filename_in, &w, &h, &c, 3);
     if (!data) {
         return 0;
     }
@@ -94,7 +95,7 @@ int load_image(const char *filename, image_t *img){
     img->width = w;
     img->height = h;
     img->channels = c;
-    fill(img, 0);
+    fill(img, 0); // need to allocate mem based on img size
     for (int k = 0; k < c; ++k){
         for (int j = 0; j < h; ++j){
             for (int i = 0; i < w; ++i){
@@ -108,13 +109,39 @@ int load_image(const char *filename, image_t *img){
     return 1;
 }
 
+int output_image(const char *filename_out, image_t *img, int quality){
+    
+    uint8_t *data = (uint8_t*)calloc(img->width * img->height * img->channels, sizeof(uint8_t));
+    for(int c = 0; c < img->channels; c++){
+        for(int i = 0; i < img->width*img->height; i++){
+            data[i*img->channels+c] = (uint8_t) (255*img->data[c*img->width*img->height + i]);
+        }
+    }
+    int success = stbi_write_jpg(filename_out, img->width, img->height, img->channels, data, quality);
+    free(data);
+    if(!success){
+        return 0;
+    }
+    return 1;
+}
+
 int main(int argc, char *argv[]){
 
-    struct image_params params;
+    image_params *params;
+    params->fname_in = "input.jpg";
+    params->fname_out = "output.jpg";
     image_t *img;
     image_init(img,0,0,0);
-    if (!load_image(params.fname, img)) {
-        fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, params.fname);
+    if (!load_image(params->fname_in, img)) {
+        fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, params->fname_in);
         return 1;
     }
+
+    letterbox_image(img, 256, 256); 
+
+    if (!output_image(params->fname_out, img, 80)) {
+        fprintf(stderr, "%s: failed to save image to '%s'\n", __func__, params->fname_out);
+        return 1;
+    }
+
 }
