@@ -10,8 +10,14 @@ typedef struct image_params {
     const char *fname_out;
 } image_params;
 
-void resize_image(image_t *img, int w, int h)
-{
+void copy_image(image_t *src, image_t *dest){
+    dest->width = src->width;
+    dest->height = src->height;
+    dest->channels = src->channels;
+    dest->data = src->data;
+}
+
+void resize_image(image_t *img, int w, int h){
     image_t resized;
     image_init(&resized, w, h, img->channels);
 
@@ -53,16 +59,12 @@ void resize_image(image_t *img, int w, int h)
         }
     }
 
-    image_t *garbage = img;
-
-    img = &resized;
-
-    free_image(garbage);
+    free_image(img);
+    copy_image(&resized, img);
     free_image(&part);
 }
 
-void embed_image(image_t *source, image_t *dest, int dx, int dy)
-{
+void embed_image(image_t *source, image_t *dest, int dx, int dy){
     for (int k = 0; k < source->channels; ++k) {
         for (int y = 0; y < source->height; ++y) {
             for (int x = 0; x < source->width; ++x) {
@@ -90,13 +92,12 @@ void letterbox_image(image_t *img, int w, int h){
 
     image_t boxed;
     image_init(&boxed, w, h, img->channels); 
+    fill(&boxed, 0.5);
 
     embed_image(img, &boxed, (w-new_w)/2, (h-new_h)/2);
 
-    image_t *garbage = img;
-    img = &boxed;
-
-    free_image(garbage);
+    free_image(img);
+    copy_image(&boxed, img);
 }
 
 int load_image(const char *filename_in, image_t *img){
