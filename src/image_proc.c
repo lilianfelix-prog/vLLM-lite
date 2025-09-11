@@ -10,11 +10,6 @@
 #include <assert.h>
 #include <stdlib.h> 
 
-typedef struct image_params {
-    const char *fname_in;
-    const char *fname_out;
-} image_params;
-
 void image_init(image_t *img, int w, int h, int c){
     img->width = w;
     img->height = h;
@@ -174,21 +169,27 @@ int output_image(const char *filename_out, image_t *img, int quality){
     return 1;
 }
 
+image_params_t *params_init(image_params_t *params, char *file_in, char *file_out){
+    params->fname_in = file_in;
+    params->fname_out = file_out;
+    return params;
+}
+
 int main(int argc, char *argv[]){
 
-    image_params *params;
-    params->fname_in = "../test_input/test.jpg";
-    params->fname_out = "./test_output/test.jpg";
+    image_params_t params;
+    image_params_t *params_ptr = params_init(&params, "../test_input/test.jpg", "./test_output/test.jpg");
     image_t img;
-    if (!load_image(params->fname_in, &img)) {
-        fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, params->fname_in);
+    
+    if (!load_image(params_ptr->fname_in, &img)) {
+        fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, params_ptr->fname_in);
         return 1;
     }
 
     letterbox_image(&img, 256, 256); 
 
-    if (!output_image(params->fname_out, &img, 80)) {
-        fprintf(stderr, "%s: failed to save image to '%s'\n", __func__, params->fname_out);
+    if (!output_image(params_ptr->fname_out, &img, 80)) {
+        fprintf(stderr, "%s: failed to save image to '%s'\n", __func__, params_ptr->fname_out);
         return 1;
     }
     free_image(&img);

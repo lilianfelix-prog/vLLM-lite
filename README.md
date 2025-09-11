@@ -1,5 +1,7 @@
 # vLLM-lite
 
-- Goal: vllm = multi-user request management --> robotics systems inference task management.
-Allowing "concurrent" thought processes by implementing vllm PageAttention on minimal LLM inference. 
+- Goal: vlm = efficient vision language model pipeline --> robotics systems, vision inference / task management.
+Allowing real-time performance by implementing vlm and PageAttention on a minimal c inference system. 
 
+🚧 :
+- Currently doing the image/video stream preprocessing.
