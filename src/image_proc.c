@@ -1,14 +1,52 @@
 // refactored from https://github.com/ggml-org/ggml/blob/master/examples/yolo/yolo-image.cpp
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
+
 #include "image_proc.h"
+
+#include <assert.h>
+#include <stdlib.h> 
 
 typedef struct image_params {
     const char *fname_in;
     const char *fname_out;
 } image_params;
+
+void image_init(image_t *img, int w, int h, int c){
+    img->width = w;
+    img->height = h;
+    img->channels = c;
+    img->size = img->width * img->height * img->channels;
+    img->data = calloc(img->size, sizeof(float));    
+}
+
+float get_pixel(image_t *img, int x, int y, int c){
+    assert(x >= 0 && x < img->width && y >= 0 && y < img->height && c >= 0 && c < img->channels);
+    return img->data[c * img->width * img->height + y * img->width + x];
+}
+
+void set_pixel(image_t *img, int x, int y, int c, float val){
+    assert(x >= 0 && x < img->width && y >= 0 && y < img->height && c >= 0 && c < img->channels);
+    img->data[c * img->width * img->height + y * img->width + x] = val;
+}
+
+void add_pixel(image_t *img, int x, int y, int c, float val){
+    assert(x >= 0 && x < img->width && y >= 0 && y < img->height && c >= 0 && c < img->channels);
+    img->data[c * img->width * img->height + y * img->width + x] += val;
+}
+
+void fill(image_t *img, float val){
+    for(int i = 0; i < img->size; i++){
+        img->data[i] = val; 
+    }
+}
+
+void free_image(image_t *img){
+    free(img->data);
+}
 
 void copy_image(image_t *src, image_t *dest){
     dest->width = src->width;
@@ -139,8 +177,8 @@ int output_image(const char *filename_out, image_t *img, int quality){
 int main(int argc, char *argv[]){
 
     image_params *params;
-    params->fname_in = "../input.jpg";
-    params->fname_out = "output.jpg";
+    params->fname_in = "../test_input/test.jpg";
+    params->fname_out = "./test_output/test.jpg";
     image_t img;
     if (!load_image(params->fname_in, &img)) {
         fprintf(stderr, "%s: failed to load image from '%s'\n", __func__, params->fname_in);
