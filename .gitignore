@@ -1,3 +1,4 @@
 *makeimage
 *.o
 *.out*
+.vscode
